@@ -1,0 +1,338 @@
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Game Agama Islam - Serat & Edukasi</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #2b0314 0%, #580a2c 40%, #831843 75%, #9f1239 100%);
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(28, 8, 19, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(244, 114, 182, 0.2);
+        }
+        .glass-badge {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .option-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px -5px rgba(244, 114, 182, 0.4);
+            border-color: rgba(244, 114, 182, 0.8);
+        }
+        @keyframes pulse-pink {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
+        .animate-pulse-pink {
+            animation: pulse-pink 2.5s infinite ease-in-out;
+        }
+        /* Custom Scrollbar for review modal & leaderboard */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 5, 12, 0.5);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(244, 114, 182, 0.4);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(244, 114, 182, 0.7);
+        }
+    </style>
+</head>
+<body class="text-slate-100 flex items-center justify-center p-3 sm:p-6 min-h-screen">
+
+    <!-- Container Utama -->
+    <div class="w-full max-w-2xl mx-auto my-auto">
+
+        <!-- Header / Bar Atas -->
+        <header class="flex items-center justify-between mb-5 px-2">
+            <div class="flex items-center space-x-3">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-700 border border-pink-300/40 flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-pink-900/50">
+                    ☪
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-bold tracking-wide text-white flex items-center gap-2">
+                        Kuis Agama Islam
+                    </h1>
+                    <p class="text-xs text-pink-200/90 font-medium" id="playerDisplayHeader">Uji Pengetahuan & Wawasan Islam</p>
+                </div>
+            </div>
+            
+            <button id="soundToggle" onclick="toggleSound()" class="px-3 py-2 rounded-xl bg-pink-950/70 hover:bg-pink-900/80 text-pink-100 text-xs font-semibold flex items-center gap-1.5 border border-pink-700/50 transition shadow-sm active:scale-95">
+                <span id="soundIcon">🔊</span> <span id="soundText" class="hidden sm:inline">Suara: On</span>
+            </button>
+        </header>
+
+        <!-- LANDING / START SCREEN -->
+        <div id="startScreen" class="glass-card rounded-3xl p-6 sm:p-8 text-center shadow-2xl relative overflow-hidden">
+            <!-- Decorative Ornaments -->
+            <div class="absolute -top-20 -right-20 w-44 h-44 bg-pink-500/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-20 -left-20 w-44 h-44 bg-rose-600/20 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-tr from-pink-600 via-rose-500 to-amber-400 flex items-center justify-center text-3xl shadow-xl shadow-pink-950/60 border border-pink-300/30 animate-pulse-pink">
+                📖
+            </div>
+
+            <h2 class="text-2xl sm:text-3xl font-extrabold mb-2 text-white">Selamat Datang di Kuis Islam!</h2>
+            <p class="text-pink-100/90 text-xs sm:text-sm mb-6 max-w-md mx-auto leading-relaxed">
+                Terdapat <span class="text-pink-300 font-bold underline decoration-pink-400/50">15 Pertanyaan</span> pilihan ganda seputar rukun iman, rukun islam, serta sejarah para Nabi.
+            </p>
+
+            <!-- Input Nama Peserta -->
+            <div class="mb-6 max-w-md mx-auto text-left">
+                <label for="playerNameInput" class="block text-xs font-bold text-pink-200 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                    👤 Nama Peserta
+                </label>
+                <input type="text" id="playerNameInput" placeholder="Masukkan nama lengkap Anda..." maxlength="25" class="w-full px-4 py-3.5 bg-slate-900/90 border border-pink-500/40 rounded-2xl text-white placeholder-pink-300/40 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-500/30 transition font-semibold text-sm shadow-inner">
+                <p id="nameError" class="text-rose-300 text-xs mt-2 hidden flex items-center gap-1.5 bg-rose-950/80 px-3 py-1.5 rounded-lg border border-rose-800">
+                    ⚠️ Silakan masukkan nama Anda terlebih dahulu sebelum memulai!
+                </p>
+            </div>
+
+            <!-- Stats Badge Grid -->
+            <div class="grid grid-cols-3 gap-2.5 mb-7 max-w-md mx-auto text-center">
+                <div class="glass-badge p-3 rounded-2xl">
+                    <span class="block text-pink-300 font-extrabold text-lg">15</span>
+                    <span class="text-[10px] sm:text-xs text-pink-200/80 font-medium">Soal Pilihan</span>
+                </div>
+                <div class="glass-badge p-3 rounded-2xl">
+                    <span class="block text-pink-300 font-extrabold text-lg">15 Detik</span>
+                    <span class="text-[10px] sm:text-xs text-pink-200/80 font-medium">Waktu/Soal</span>
+                </div>
+                <div class="glass-badge p-3 rounded-2xl">
+                    <span class="block text-pink-300 font-extrabold text-lg">Instan</span>
+                    <span class="text-[10px] sm:text-xs text-pink-200/80 font-medium">Pembahasan</span>
+                </div>
+            </div>
+
+            <!-- Leaderboard Ringkas -->
+            <div id="leaderboardSection" class="mb-7 max-w-md mx-auto text-left bg-slate-950/50 border border-pink-900/50 rounded-2xl p-4 hidden">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-pink-300 mb-2.5 flex items-center justify-between">
+                    <span>🏆 Papan Skor Tertinggi Lokal</span>
+                    <button onclick="clearLeaderboard()" class="text-[10px] text-pink-400/80 hover:text-pink-200 underline">Hapus</button>
+                </h4>
+                <div id="leaderboardList" class="space-y-1.5 text-xs">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+
+            <button onclick="startQuiz()" class="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-pink-500 via-rose-600 to-pink-600 hover:from-pink-400 hover:to-rose-500 text-white font-bold rounded-2xl shadow-xl shadow-pink-950/70 transform transition hover:-translate-y-0.5 active:scale-95 text-base tracking-wide border border-pink-300/30">
+                Mulai Kuis Sekarang 🚀
+            </button>
+        </div>
+
+        <!-- QUIZ SCREEN -->
+        <div id="quizScreen" class="glass-card rounded-3xl p-5 sm:p-8 shadow-2xl hidden relative">
+            <!-- Progress & Timer Bar -->
+            <div class="mb-5">
+                <div class="flex justify-between items-center mb-2">
+                    <span id="questionNum" class="text-xs font-bold uppercase tracking-wider text-pink-300">Pertanyaan 1 dari 15</span>
+                    
+                    <div class="flex items-center gap-2">
+                        <!-- Timer Badge -->
+                        <div id="timerBadge" class="flex items-center gap-1 bg-amber-500/20 border border-amber-400/40 text-amber-300 px-3 py-1 rounded-full text-xs font-bold">
+                            ⏱️ <span id="timeLeft">15</span>s
+                        </div>
+                        <!-- Score Badge -->
+                        <span id="scoreTracker" class="text-xs font-bold text-white bg-pink-950/80 px-3 py-1 rounded-full border border-pink-700/60">Skor: 0</span>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-slate-950/80 rounded-full h-2.5 overflow-hidden border border-pink-900/40">
+                    <div id="progressBar" class="bg-gradient-to-r from-pink-500 to-rose-400 h-2.5 rounded-full transition-all duration-300" style="width: 6.66%"></div>
+                </div>
+            </div>
+
+            <!-- Teks Soal -->
+            <div class="mb-5 min-h-[75px] bg-slate-900/60 p-4 rounded-2xl border border-pink-900/30">
+                <h3 id="questionText" class="text-base sm:text-lg font-bold text-white leading-relaxed">
+                    Memuat pertanyaan...
+                </h3>
+            </div>
+
+            <!-- Opsi Jawaban -->
+            <div id="optionsContainer" class="space-y-3 mb-5">
+                <!-- Diisi via JavaScript -->
+            </div>
+
+            <!-- Pembahasan Ringkas / Feedback -->
+            <div id="feedbackBox" class="hidden p-4 rounded-2xl mb-5 text-xs sm:text-sm leading-relaxed transition-all duration-200">
+                <!-- Diisi via JavaScript -->
+            </div>
+
+            <!-- Tombol Lanjut -->
+            <div class="flex justify-end">
+                <button id="nextBtn" onclick="nextQuestion()" disabled class="px-6 py-3 bg-pink-800/50 opacity-50 cursor-not-allowed text-pink-200 font-bold rounded-xl shadow-lg transition flex items-center gap-2 text-sm">
+                    <span>Lanjut</span>
+                    <span>→</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- RESULTS SCREEN -->
+        <div id="resultScreen" class="glass-card rounded-3xl p-6 sm:p-8 text-center shadow-2xl hidden relative">
+            <div class="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-tr from-amber-400 via-pink-500 to-rose-600 flex items-center justify-center text-4xl shadow-xl shadow-pink-950/80 border border-pink-300/30">
+                🏆
+            </div>
+
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-1" id="resultTitle">Kuis Selesai!</h2>
+            <p id="resultSubtitle" class="text-pink-200 text-xs sm:text-sm mb-6">Berikut adalah hasil pencapaian Anda</p>
+
+            <!-- Card Skor Utama -->
+            <div class="bg-slate-900/90 border border-pink-800/60 rounded-2xl p-6 mb-6 max-w-md mx-auto shadow-inner">
+                <div class="text-4xl sm:text-5xl font-black text-pink-400 mb-2 tracking-tight" id="finalScore">0 / 100</div>
+                <p id="scoreMessage" class="text-pink-100 text-sm font-semibold mb-1">Sangat Baik!</p>
+                
+                <div class="grid grid-cols-2 gap-3 mt-5 pt-5 border-t border-pink-900/60 text-center">
+                    <div class="bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-800/40">
+                        <span class="block text-emerald-300 text-[11px] font-medium">Jawaban Benar</span>
+                        <span id="correctAnswersCount" class="text-xl font-extrabold text-emerald-400">0</span>
+                    </div>
+                    <div class="bg-rose-950/40 p-2.5 rounded-xl border border-rose-800/40">
+                        <span class="block text-rose-300 text-[11px] font-medium">Jawaban Salah / Waktu Habis</span>
+                        <span id="wrongAnswersCount" class="text-xl font-extrabold text-rose-400">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row justify-center gap-3 mb-6">
+                <button onclick="restartQuiz()" class="px-6 py-3.5 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white font-bold rounded-xl shadow-lg transition active:scale-95 text-sm">
+                    🔄 Ulangi Kuis
+                </button>
+                <button onclick="goToHome()" class="px-6 py-3.5 bg-slate-900 hover:bg-slate-800 text-pink-200 border border-pink-700/60 font-bold rounded-xl transition active:scale-95 text-sm">
+                    👤 Ganti Pemain
+                </button>
+                <button onclick="toggleReviewModal()" class="px-6 py-3.5 bg-pink-950/80 hover:bg-pink-900 text-pink-100 border border-pink-600/50 font-bold rounded-xl transition active:scale-95 text-sm">
+                    📋 Pembahasan
+                </button>
+            </div>
+
+            <!-- Review Section / Pembahasan Lengkap -->
+            <div id="reviewContainer" class="hidden text-left bg-slate-950/95 rounded-2xl p-4 sm:p-5 border border-pink-900/80 max-h-96 overflow-y-auto space-y-3.5">
+                <h4 class="font-bold text-white mb-3 text-sm sm:text-base flex items-center justify-between border-b border-pink-900/60 pb-2">
+                    <span class="flex items-center gap-1.5">📖 Pembahasan Detail Soal</span>
+                    <button onclick="toggleReviewModal()" class="text-pink-300 hover:text-white text-xs bg-pink-900/50 px-2.5 py-1 rounded-lg border border-pink-700">Tutup ✕</button>
+                </h4>
+                <div id="reviewList" class="space-y-3 text-xs sm:text-sm">
+                    <!-- Inject review via JS -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Data 15 Soal Agama Islam
+        const quizData = [
+            {
+                question: "1. Kitab suci Al-Qur'an diturunkan kepada Nabi Muhammad SAW melalui perantara malaikat...",
+                options: ["A. Malaikat Jibril", "B. Malaikat Mikail", "C. Malaikat Israfil", "D. Malaikat Izrail"],
+                correct: 0,
+                explanation: "Malaikat Jibril bertugas menyampaikan wahyu Allah SWT kepada para Nabi dan Rasul."
+            },
+            {
+                question: "2. Surah pertama yang diturunkan kepada Nabi Muhammad SAW di Gua Hira adalah...",
+                options: ["A. Surah Al-Baqarah ayat 1-5", "B. Surah Al-Fatihah ayat 1-7", "C. Surah Al-'Alaq ayat 1-5", "D. Surah Al-Ikhlas ayat 1-4"],
+                correct: 2,
+                explanation: "Surah Al-'Alaq ayat 1-5 adalah wahyu pertama yang diturunkan Allah SWT di Gua Hira."
+            },
+            {
+                question: "3. Urutan Rukun Islam yang ketiga adalah...",
+                options: ["A. Menunaikan zakat", "B. Mendirikan shalat", "C. Berpuasa di bulan Ramadhan", "D. Menunaikan haji bagi yang mampu"],
+                correct: 0,
+                explanation: "Urutan Rukun Islam: 1. Syahadat, 2. Shalat, 3. Zakat, 4. Puasa Ramadhan, 5. Haji bagi yang mampu."
+            },
+            {
+                question: "4. Nabi yang mendapat julukan Khatamul Anbiya (Penutup Para Nabi) adalah...",
+                options: ["A. Nabi Ibrahim a.s.", "B. Nabi Muhammad SAW", "C. Nabi Isa a.s.", "D. Nabi Musa a.s."],
+                correct: 1,
+                explanation: "Nabi Muhammad SAW adalah Khatamul Anbiya wal Mursalin (Penutup para nabi dan rasul)."
+            },
+            {
+                question: "5. Shalat wajib lima waktu yang memiliki jumlah rakaat paling sedikit adalah...",
+                options: ["A. Shalat Dzuhur", "B. Shalat Isya", "C. Shalat Subuh", "D. Shalat Maghrib"],
+                correct: 2,
+                explanation: "Shalat Subuh berjumlah 2 rakaat, merupakan jumlah rakaat paling sedikit dalam shalat fardhu."
+            },
+            {
+                question: "6. Peristiwa perjalanan malam hari Nabi Muhammad SAW dari Masjidil Haram ke Masjidil Aqsha lalu naik ke Sidratul Muntaha disebut...",
+                options: ["A. Isra Mi'raj", "B. Fathu Makkah", "C. Perjanjian Hudaibiyah", "D. Peristiwa Hijrah"],
+                correct: 0,
+                explanation: "Isra Mi'raj adalah perjalanan mulia Nabi Muhammad SAW menerima perintah shalat 5 waktu."
+            },
+            {
+                question: "7. Malaikat yang bertugas mencatat amal buruk manusia adalah...",
+                options: ["A. Malaikat Munkar", "B. Malaikat Nakir", "C. Malaikat 'Atid", "D. Malaikat Raqib"],
+                correct: 2,
+                explanation: "Malaikat Raqib mencatat amal baik, sedangkan Malaikat 'Atid mencatat amal buruk."
+            },
+            {
+                question: "8. Jumlah juz yang terdapat di dalam Al-Qur'an secara keseluruhan adalah...",
+                options: ["A. 20 Juz", "B. 30 Juz", "C. 25 Juz", "D. 40 Juz"],
+                correct: 1,
+                explanation: "Al-Qur'an terdiri dari 30 juz, 114 surah, dan 6.236 ayat."
+            },
+            {
+                question: "9. Khalifah pertama dari Khulafaur Rasyidin yang menggantikan kepemimpinan setelah Nabi Muhammad SAW wafat adalah...",
+                options: ["A. Ali bin Abi Thalib", "B. Abu Bakar Ash-Shiddiq", "C. Umar bin Khattab", "D. Usman bin Affan"],
+                correct: 1,
+                explanation: "Abu Bakar Ash-Shiddiq r.a. adalah khalifah pertama dari Khulafaur Rasyidin."
+            },
+            {
+                question: "10. Bersuci menggunakan debu atau tanah yang bersih sebagai pengganti wudhu dinamakan...",
+                options: ["A. Mandi wajib", "B. Istinja", "C. Tayamum", "D. Tazkiyah"],
+                correct: 2,
+                explanation: "Tayamum adalah rukhsah (kemudahan) bersuci menggunakan debu/tanah yang suci saat tidak ada air."
+            },
+            {
+                question: "11. Puasa yang hukumnya wajib dilakukan oleh setiap umat Islam yang memenuhi syarat selama satu bulan penuh adalah...",
+                options: ["A. Puasa Syawal", "B. Puasa Arafah", "C. Puasa Ramadhan", "D. Puasa Senin-Kamis"],
+                correct: 2,
+                explanation: "Puasa Ramadhan hukumnya fardhu 'ain (wajib) selama satu bulan penuh di bulan Ramadhan."
+            },
+            {
+                question: "12. Rukun Iman yang kelima menurut ajaran Islam adalah percaya kepada...",
+                options: ["A. Malaikat-malaikat Allah", "B. Hari Kiamat", "C. Kitab-kitab Allah", "D. Qada dan Qadar"],
+                correct: 1,
+                explanation: "Rukun Iman ke-5 adalah percaya kepada Hari Kiamat."
+            },
+            {
+                question: "13. Kitab suci Injil diturunkan oleh Allah SWT kepada Nabi...",
+                options: ["A. Nabi Daud a.s.", "B. Nabi Ibrahim a.s.", "C. Nabi Isa a.s.", "D. Nabi Musa a.s."],
+                correct: 2,
+                explanation: "Taurat (Nabi Musa a.s.), Zabur (Nabi Daud a.s.), Injil (Nabi Isa a.s.), Al-Qur'an (Nabi Muhammad SAW)."
+            },
+            {
+                question: "14. Gelar Al-Amin yang diberikan masyarakat Makkah kepada Nabi Muhammad SAW berarti...",
+                options: ["A. Orang yang penyebar", "B. Orang yang cerdas", "C. Orang yang pemurah", "D. Orang yang dapat dipercaya"],
+                correct: 3,
+                explanation: "Al-Amin artinya 'Orang yang dapat dipercaya' karena kejujuran Nabi Muhammad SAW."
+            },
+            {
+                question: "15. Jumlah Rukun Iman ada...",
+                options: ["A. Lima", "B. Enam", "C. Tiga", "D. Dua"],
+                correct: 1,
+          
